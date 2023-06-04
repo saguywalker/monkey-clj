@@ -43,5 +43,8 @@
   (next-token (new-lexer "hello world"))
   (read-char (new-lexer ""))
   (read-char (new-lexer "0"))
-  (read-char (new-lexer "hello")))
+  (read-char (new-lexer "hello"))
+  (def my-test-1 (new-lexer "`=+(){},;`"))
+  (next-token my-test-1)
+  )
 
