@@ -23,7 +23,7 @@
 (def FUNCTION "FUNCTION")
 (def LET "LET")
 
-(defn next-token [input-atom]
+(defn next-token [lexer-atom]
   {:type ILLEGAL
    :literal "dunno"})
 

@@ -1,10 +1,11 @@
 (ns saguywalker.lexer-test
   (:require [clojure.test :refer :all]
-            [saguywalker.token :as token]))
+            [saguywalker.token :as token
+             saguywalker.lexer :as lexer]))
 
 (deftest next-token-test
   (testing "next token test"
-    (let [input (atom "`=+(){},;`")
+    (let [input (atom (lexer/new-lexer "`=+(){},;`"))
           tests [{:type token/ASSIGN :literal "="}
                  {:type token/PLUS :literal "+"}
                  {:type token/LPAREN :literal "("}
