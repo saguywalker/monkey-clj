@@ -20,9 +20,22 @@
                     :read-position 0
                     :ch nil})))
 
+(defn- letter? [ch]
+  (Character/isLetter ch))
+
+(defn- read-identifier [lexer-atom]
+  (let [position (:position @lexer-atom)]
+    (while (letter? (:ch @lexer-atom))
+      (println @lexer-atom)
+      (read-char lexer-atom))
+    (let [lexer @lexer-atom]
+      (token/new-token token/IDENT
+                       (subs (:input lexer)
+                             position
+                             (:position lexer))))))
+
 (defn next-token [lexer-atom]
-  (let [lexer @lexer-atom
-        ch (:ch lexer)
+  (let [ch (:ch @lexer-atom)
         tok (cond
               (= ch \=) (token/new-token token/ASSIGN ch)
               (= ch \;) (token/new-token token/SEMICOLON ch)
@@ -32,19 +45,22 @@
               (= ch \+) (token/new-token token/PLUS ch)
               (= ch \{) (token/new-token token/LBRACE ch)
               (= ch \}) (token/new-token token/RBRACE ch)
-              (= ch 0) (token/new-token token/EOF ""))]
-    (read-char lexer-atom)
+              (= ch 0) (token/new-token token/EOF "")
+              :else (if (letter? ch)
+                      (read-identifier lexer-atom)
+                      (token/new-token token/ILLEGAL ch)))]
+    (when-not (letter? ch) (read-char lexer-atom))
     tok))
 
 (comment
-  (def lexer-test (new-lexer "(){};"))
+  (def lexer-test (new-lexer "()test{}"))
   (next-token lexer-test)
+  @lexer-test
   (next-token (new-lexer "()"))
   (next-token (new-lexer "hello world"))
   (read-char (new-lexer ""))
   (read-char (new-lexer "0"))
   (read-char (new-lexer "hello"))
   (def my-test-1 (new-lexer "`=+(){},;`"))
-  (next-token my-test-1)
-  )
+  (next-token my-test-1))
 
