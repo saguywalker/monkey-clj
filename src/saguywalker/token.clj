@@ -23,7 +23,8 @@
 (def FUNCTION "FUNCTION")
 (def LET "LET")
 
-(defn next-token [lexer-atom]
-  {:type ILLEGAL
-   :literal "dunno"})
 
+(defn new-token 
+  [token-type literal]
+  {:type token-type
+   :literal (str literal)})
