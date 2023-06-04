@@ -2,12 +2,6 @@
 
 ;; Lexer {:input :position :read-position :ch}
 
-(defn new-lexer [input]
-  {:input input
-   :position 0
-   :read-position 0
-   :ch nil})
-
 (defn- read-char [lexer]
   (let [input (:input lexer)
         read-position (:read-position lexer)]
@@ -18,7 +12,15 @@
         (assoc :position read-position)
         (update :read-position inc))))
 
+(defn new-lexer [input]
+  (read-char {:input input
+              :position 0
+              :read-position 0
+              :ch nil}))
+
 (comment
   (new-lexer "hello world")
+  (read-char (new-lexer ""))
+  (read-char (new-lexer "0"))
   (read-char (new-lexer "hello")))
 
