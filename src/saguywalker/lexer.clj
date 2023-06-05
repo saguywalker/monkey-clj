@@ -21,12 +21,12 @@
                     :ch nil})))
 
 (defn- letter? [ch]
-  (Character/isLetter ch))
+  (or (Character/isLetter ch)
+      (= ch \_)))
 
 (defn- read-identifier [lexer-atom]
   (let [position (:position @lexer-atom)]
     (while (letter? (:ch @lexer-atom))
-      (println @lexer-atom)
       (read-char lexer-atom))
     (let [lexer @lexer-atom]
       (token/new-token token/IDENT
