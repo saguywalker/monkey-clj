@@ -23,8 +23,13 @@
 (def FUNCTION "FUNCTION")
 (def LET "LET")
 
+(defn string->token-type [literal]
+  (cond
+    (= literal "fn") FUNCTION
+    (= literal "let") LET
+    :else IDENT))
 
-(defn new-token 
+(defn new-token
   [token-type literal]
   {:type token-type
    :literal (str literal)})
