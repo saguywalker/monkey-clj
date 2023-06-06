@@ -31,7 +31,12 @@
                                  };
                                  let result = add(five, ten);
                                  !-/*5;
-                                 5 < 10 > 5;"
+                                 5 < 10 > 5;
+                                 if (5 < 10) {
+                                  return true;
+                                 } else {
+                                  return false;
+                                 }"
                                 {}))
           tests [{:type token/LET :literal "let"}
                  {:type token/IDENT :literal "five"}
@@ -81,6 +86,23 @@
                  {:type token/GT :literal ">"}
                  {:type token/INT :literal "5"}
                  {:type token/SEMICOLON :literal ";"}
+                 {:type token/IF :literal "if"}
+                 {:type token/LPAREN :literal "("}
+                 {:type token/INT :literal "5"}
+                 {:type token/LT :literal "<"}
+                 {:type token/INT :literal "10"}
+                 {:type token/RPAREN :literal ")"}
+                 {:type token/LBRACE :literal "{"}
+                 {:type token/RETURN :literal "return"}
+                 {:type token/TRUE :literal "true"}
+                 {:type token/SEMICOLON :literal ";"}
+                 {:type token/RBRACE :literal "}"}
+                 {:type token/ELSE :literal "else"}
+                 {:type token/LBRACE :literal "{"}
+                 {:type token/RETURN :literal "return"}
+                 {:type token/FALSE :literal "false"}
+                 {:type token/SEMICOLON :literal ";"}
+                 {:type token/RBRACE :literal "}"}
                  {:type token/EOF :literal ""}]]
       (doseq [tt tests]
         (let [result (lexer/next-token input)]

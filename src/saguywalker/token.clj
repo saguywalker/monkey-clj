@@ -28,11 +28,21 @@
 ;; Keywords
 (def FUNCTION "FUNCTION")
 (def LET "LET")
+(def TRUE "TRUE")
+(def FALSE "FALSE")
+(def IF "IF")
+(def ELSE "ELSE")
+(def RETURN "RETURN")
 
 (defn string->token-type [literal]
   (cond
     (= literal "fn") FUNCTION
     (= literal "let") LET
+    (= literal "true") TRUE
+    (= literal "false") FALSE
+    (= literal "if") IF
+    (= literal "else") ELSE
+    (= literal "return") RETURN
     :else IDENT))
 
 (defn new-token
