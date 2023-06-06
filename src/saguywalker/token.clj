@@ -10,6 +10,12 @@
 ;; Operators
 (def ASSIGN "=")
 (def PLUS "+")
+(def MINUS "-")
+(def BANG "+")
+(def ASTERISK "*")
+(def SLASH "/")
+(def LT "<")
+(def GT "")
 
 ;; Delimiters
 (def COMMA ",")
