@@ -7,9 +7,7 @@
   (let [lexer @lexer-atom
         input (:input lexer)
         read-position (:read-position lexer)]
-    (swap! lexer-atom assoc :ch (if (>= read-position (count input))
-                                  0
-                                  (nth input read-position)))
+    (swap! lexer-atom assoc :ch (nth input read-position 0))
     (swap! lexer-atom assoc :position read-position)
     (swap! lexer-atom update :read-position inc)
     lexer-atom))
@@ -57,18 +55,31 @@
       (read-char lexer-atom)
       (recur lexer-atom))))
 
+(defn- peek-char [lexer-atom]
+  (nth (:input @lexer-atom)
+       (:read-position @lexer-atom)
+       0))
+
 (defn next-token [lexer-atom]
   (skip-whitespace lexer-atom)
   (let [ch (:ch @lexer-atom)
         tok (cond
-              (= ch \=) (token/new-token token/ASSIGN ch)
+              (= ch \=) (if (= \= (peek-char lexer-atom))
+                          (let [_ (read-char lexer-atom)
+                                literal (str ch (:ch @lexer-atom))]
+                            (token/new-token token/EQ literal))
+                          (token/new-token token/ASSIGN ch))
               (= ch \;) (token/new-token token/SEMICOLON ch)
               (= ch \() (token/new-token token/LPAREN ch)
               (= ch \)) (token/new-token token/RPAREN ch)
               (= ch \,) (token/new-token token/COMMA ch)
               (= ch \+) (token/new-token token/PLUS ch)
               (= ch \-) (token/new-token token/MINUS ch)
-              (= ch \!) (token/new-token token/BANG ch)
+              (= ch \!) (if (= \= (peek-char lexer-atom))
+                          (let [_ (read-char lexer-atom)
+                                literal (str ch (:ch @lexer-atom))]
+                            (token/new-token token/NOT_EQ literal))
+                          (token/new-token token/BANG ch))
               (= ch \/) (token/new-token token/SLASH ch)
               (= ch \*) (token/new-token token/ASTERISK ch)
               (= ch \<) (token/new-token token/LT ch)

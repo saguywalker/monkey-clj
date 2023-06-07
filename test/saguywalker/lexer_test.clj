@@ -36,7 +36,10 @@
                                   return true;
                                  } else {
                                   return false;
-                                 }"
+                                 }
+                                 10 == 10;
+                                 10 != 9;
+                                 "
                                 {}))
           tests [{:type token/LET :literal "let"}
                  {:type token/IDENT :literal "five"}
@@ -103,6 +106,14 @@
                  {:type token/FALSE :literal "false"}
                  {:type token/SEMICOLON :literal ";"}
                  {:type token/RBRACE :literal "}"}
+                 {:type token/INT :literal "10"}
+                 {:type token/EQ :literal "=="}
+                 {:type token/INT :literal "10"}
+                 {:type token/SEMICOLON :literal ";"}
+                 {:type token/INT :literal "10"}
+                 {:type token/NOT_EQ :literal "!="}
+                 {:type token/INT :literal "9"}
+                 {:type token/SEMICOLON :literal ";"}
                  {:type token/EOF :literal ""}]]
       (doseq [tt tests]
         (let [result (lexer/next-token input)]

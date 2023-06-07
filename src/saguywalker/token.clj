@@ -16,6 +16,8 @@
 (def SLASH "/")
 (def LT "<")
 (def GT "")
+(def EQ "==")
+(def NOT_EQ "!=")
 
 ;; Delimiters
 (def COMMA ",")
