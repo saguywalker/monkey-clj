@@ -3,7 +3,7 @@
  :aliases
  {:run-m {:main-opts ["-m" "saguywalker.monkey-clj"]}
   :run-x {:ns-default saguywalker.monkey-clj
-          :exec-fn greet
+          :exec-fn -main 
           :exec-args {:name "Clojure"}}
   :build {:deps {io.github.clojure/tools.build
                  {:git/tag "v0.9.2" :git/sha "fe6b140"}}

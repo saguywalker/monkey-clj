@@ -11,11 +11,12 @@
       (recur lexer-atom))))
 
 (defn start []
-  (println PROMPT)
-  (let [line (read-line)
-        lexer-atom (lexer/new-lexer line)]
-    (loop-read-token lexer-atom)
-    (recur)))
+    (print PROMPT)
+    (flush)
+    (let [line (read-line)
+          lexer-atom (lexer/new-lexer line)]
+      (loop-read-token lexer-atom)
+      (recur)))
 
 (comment
   (def test-lexer (lexer/new-lexer "let hello = 1337;"))

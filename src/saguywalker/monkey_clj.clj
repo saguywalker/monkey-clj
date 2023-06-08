@@ -1,12 +1,11 @@
 (ns saguywalker.monkey-clj
-  (:gen-class))
-
-(defn greet
-  "Callable entry point to the application."
-  [data]
-  (println (str "Hello, " (or (:name data) "World") "!")))
+  (:gen-class)
+  (:require [saguywalker.repl :as repl]))
 
 (defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (greet {:name (first args)}))
+  [& _]
+  (println "Hello"
+           (get (System/getenv) "USER")
+           "This is the Monkey programming language!")
+  (println "Feel free to type in commands")
+  (repl/start))
