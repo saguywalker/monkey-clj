@@ -51,3 +51,6 @@
   [token-type literal]
   {:type token-type
    :literal (str literal)})
+
+(defn token-literal [statement]
+  (get-in statement [:token :literal]))
