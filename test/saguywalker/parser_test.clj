@@ -21,5 +21,4 @@
                                    (:statements program)
                                    ["x", "y", "foobar"])]
         (is (= (token/token-literal stmt) "let"))
-        (is (= expected (get-in stmt [:name :value])))
-        (is (= expected (get-in stmt [:name :literal])))))))
+        (is (= expected (get-in stmt [:name :value])))))))

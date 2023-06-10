@@ -17,13 +17,34 @@
     (next-token parser-atom)
     parser-atom))
 
+(defn- expect-peek [parser-atom token-type]
+  (if (= token-type
+         (get-in @parser-atom [:peek-token :type]))
+    (do
+      (next-token parser-atom)
+      true)
+    false))
+
 (defn- parse-let-statement [parser-atom]
-  nil)
+  (let [current-token (:current-token @parser-atom)]
+    (if (not (expect-peek parser-atom token/IDENT))
+      nil
+      (let [next-current-token (:current-token @parser-atom)]
+        (if (not  (expect-peek parser-atom token/ASSIGN))
+          nil
+          (do
+            (while (not= (get-in @parser-atom [:current-token :type])
+                         token/SEMICOLON)
+              (next-token parser-atom))
+            {:token current-token
+             :name {:token next-current-token
+                    :value (:literal next-current-token)}}))))))
 
 (defn- parser-statement [parser-atom]
   (let [token-type (get-in @parser-atom [:current-token :type])]
     (cond
-      (= token-type token/LET) (parse-let-statement parser-atom)
+      (= token-type token/LET) (let [result (parse-let-statement parser-atom)]
+                                 result)
       :else nil)))
 
 (defn- parse-statements  [parser-atom]
