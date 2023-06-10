@@ -17,8 +17,27 @@
     (next-token parser-atom)
     parser-atom))
 
-(defn parse-program [parser-atom]
+(defn- parse-let-statement [parser-atom]
   nil)
+
+(defn- parser-statement [parser-atom]
+  (let [token-type (get-in @parser-atom [:current-token :type])]
+    (cond
+      (= token-type token/LET) (parse-let-statement parser-atom)
+      :else nil)))
+
+(defn- parse-statements  [parser-atom]
+  (filter some?
+          (loop [stmts []]
+            (if (= token/EOF
+                   (get-in @parser-atom [:current-token :type]))
+              stmts
+              (let [stmt (parser-statement parser-atom)]
+                (next-token parser-atom)
+                (recur (conj stmts stmt)))))))
+
+(defn parse-program [parser-atom]
+  {:statements (parse-statements parser-atom)})
 
 (comment
   (def my-test (lexer/new-lexer "let x = 37;"))
