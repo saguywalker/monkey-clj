@@ -15,7 +15,7 @@
        (let-stmt->value-string stmt) ";"))
 
 (defn expression-stmt->return-value [stmt]
-  (get-in stmt [:return-value]))
+  (get-in stmt [:expression :value]))
 
 (defn- return-stmt->string [stmt]
   (str (token/token-literal stmt)
