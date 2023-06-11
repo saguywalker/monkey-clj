@@ -43,6 +43,6 @@
 
 (defn token-literal-from-program [program]
   (let [statements (:statements program)]
-    (if (> (count statements) 0)
+    (if (pos? (count statements))
       (token/token-literal (first statements))
       "")))

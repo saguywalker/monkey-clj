@@ -71,18 +71,15 @@
 
 (defn- parse-let-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)]
-    (if (not (expect-peek parser-atom token/IDENT))
-      nil
+    (when (expect-peek parser-atom token/IDENT)
       (let [next-current-token (:current-token @parser-atom)]
-        (if (not  (expect-peek parser-atom token/ASSIGN))
-          nil
-          (do
-            (while (not= (get-in @parser-atom [:current-token :type])
-                         token/SEMICOLON)
-              (next-token parser-atom))
-            {:token current-token
-             :name {:token next-current-token
-                    :value (:literal next-current-token)}}))))))
+        (when  (expect-peek parser-atom token/ASSIGN)
+          (while (not= (get-in @parser-atom [:current-token :type])
+                       token/SEMICOLON)
+            (next-token parser-atom))
+          {:token current-token
+           :name {:token next-current-token
+                  :value (:literal next-current-token)}})))))
 
 (defn- parse-return-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)]
@@ -95,8 +92,7 @@
 (defn parse-expression [parser-atom precedence]
   (let [current-token-type (get-in @parser-atom [:current-token :type])
         prefix (get (:prefix-parse-fns @parser-atom) current-token-type)]
-    (if (nil? prefix)
-      nil
+    (when-not (nil? prefix)
       (prefix parser-atom))))
 
 (defn parse-expression-statement [parser-atom]
