@@ -45,34 +45,36 @@
         ))))
 
 (deftest test-identifier-expression
-  (let [input (string/escape "foobar;"
-                             {})
-        l (lexer/new-lexer input)
-        p (parser/new-parser l)
-        program (parser/parse-program p)]
-    (is (= [] (:errors @p)))
-    (is (not= nil program))
-    (is (= 1 (count (:statements program))))
-    (doseq [[stmt expected] (map vector
-                                 (:statements program)
-                                 ["foobar"])]
-      (is (= (ast/expression-stmt->return-value stmt) expected))
-      (is (= (token/token-literal stmt) expected)))))
+  (testing "test identifier expression"
+    (let [input (string/escape "foobar;"
+                               {})
+          l (lexer/new-lexer input)
+          p (parser/new-parser l)
+          program (parser/parse-program p)]
+      (is (= [] (:errors @p)))
+      (is (not= nil program))
+      (is (= 1 (count (:statements program))))
+      (doseq [[stmt expected] (map vector
+                                   (:statements program)
+                                   ["foobar"])]
+        (is (= (ast/expression-stmt->return-value stmt) expected))
+        (is (= (token/token-literal stmt) expected))))))
 
 (deftest test-integer-literal-expression
-  (let [input (string/escape "5;"
-                             {})
-        l (lexer/new-lexer input)
-        p (parser/new-parser l)
-        program (parser/parse-program p)]
-    (is (= [] (:errors @p)))
-    (is (not= nil program))
-    (is (= 1 (count (:statements program))))
-    (doseq [[stmt expected] (map vector
-                                 (:statements program)
-                                 [5])]
-      (is (= (ast/integer-literal->value (:expression stmt)) expected))
-      (is (= (token/token-literal (:expression stmt)) (str expected))))))
+  (testing "test integer literal expression"
+    (let [input (string/escape "5;"
+                               {})
+          l (lexer/new-lexer input)
+          p (parser/new-parser l)
+          program (parser/parse-program p)]
+      (is (= [] (:errors @p)))
+      (is (not= nil program))
+      (is (= 1 (count (:statements program))))
+      (doseq [[stmt expected] (map vector
+                                   (:statements program)
+                                   [5])]
+        (is (= (ast/integer-literal->value (:expression stmt)) expected))
+        (is (= (token/token-literal (:expression stmt)) (str expected)))))))
 
 (defn test-integer-literal
   [expression value]
@@ -82,22 +84,71 @@
     :else true))
 
 (deftest test-prefix-expression
-  (let [test-cases [{:input "!5;"
-                     :operator "!"
-                     :integer-value 5}
-                    {:input "-15;"
-                     :operator "-"
-                     :integer-value 15}]]
-    (doseq [tt test-cases]  
-      (let [l (lexer/new-lexer (:input tt))
-            p (parser/new-parser l)
-            program (parser/parse-program p)
-            expression (:expression (first (:statements program)))]
-        (is (= [] (:errors @p)))
-        (is (not= nil program))
-        (is (= 1 (count (:statements program))))
-        (is (= (:operator expression) (:operator tt)))
-        (is (test-integer-literal (:right expression)
-                                  (:integer-value tt)))))))
+  (testing "test prefix expression"
+    (let [test-cases [{:input "!5;"
+                       :operator "!"
+                       :integer-value 5}
+                      {:input "-15;"
+                       :operator "-"
+                       :integer-value 15}]]
+      (doseq [tt test-cases]
+        (let [l (lexer/new-lexer (:input tt))
+              p (parser/new-parser l)
+              program (parser/parse-program p)
+              expression (:expression (first (:statements program)))]
+          (is (= [] (:errors @p)))
+          (is (not= nil program))
+          (is (= 1 (count (:statements program))))
+          (is (= (:operator expression) (:operator tt)))
+          (is (test-integer-literal (:right expression)
+                                    (:integer-value tt))))))))
+
+(deftest test-infix-expression
+  (testing "test infix expression"
+    (let [test-cases [{:input "5 + 6;"
+                       :left 5
+                       :operator "+"
+                       :right 6}
+                      {:input "5 - 6;"
+                       :left 5
+                       :operator "-"
+                       :right 6}
+                      {:input "5 * 6;"
+                       :left 5
+                       :operator "*"
+                       :right 6}
+                      {:input "5 / 6;"
+                       :left 5
+                       :operator "/"
+                       :right 6}
+                      {:input "5 > 6;"
+                       :left 5
+                       :operator ">"
+                       :right 6}
+                      {:input "5 < 6;"
+                       :left 5
+                       :operator "<"
+                       :right 6}
+                      {:input "5 == 6;"
+                       :left 5
+                       :operator "=="
+                       :right 6}
+                      {:input "5 != 6;"
+                       :left 5
+                       :operator "!="
+                       :right 6}]]
+      (doseq [tt test-cases]
+        (let [l (lexer/new-lexer (:input tt))
+              p (parser/new-parser l)
+              program (parser/parse-program p)
+              expression (:expression (first (:statements program)))]
+          (is (= [] (:errors @p)))
+          (is (not= nil program))
+          (is (= 1 (count (:statements program))))
+          (is (= (:operator expression) (:operator tt)))
+          (is (test-integer-literal (:left expression)
+                                    (:left tt)))
+          (is (test-integer-literal (:right expression)
+                                    (:right tt))))))))
 
 

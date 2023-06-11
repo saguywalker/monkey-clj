@@ -1,7 +1,6 @@
 (ns saguywalker.parser
-  (:require [saguywalker.ast :as ast]
-            [saguywalker.lexer :as lexer]
-            [saguywalker.token :as token]))
+  (:require   [saguywalker.lexer :as lexer]
+              [saguywalker.token :as token]))
 
 (def LOWEST 1)
 (def EQUALS 2)
@@ -11,12 +10,38 @@
 (def PREFIX 6)
 (def CALL 7)
 
+(def precedences
+  {token/EQ EQUALS
+   token/NOT_EQ EQUALS
+   token/LT LESSGREATER
+   token/GT LESSGREATER
+   token/PLUS SUM
+   token/MINUS SUM
+   token/SLASH PRODUCT
+   token/ASTERISK PRODUCT})
+
+(defn peek-precedence [parser-atom]
+  (get precedences
+       (get-in @parser-atom [:peek-token :type])
+       LOWEST))
+
+(defn current-precendence [parser-atom]
+  (get precedences
+       (get-in @parser-atom [:current-token :type])
+       LOWEST))
+
 (defn no-prefix-parse-fn-error [parser-atom token-type]
   (swap! parser-atom
          update
          :errors
          conj
          (str "no prefix parse function for " token-type " found")))
+
+(defn next-token [parser-atom]
+  (let [peek-tok (:peek-token @parser-atom)
+        lexer-atom (:lexer @parser-atom)]
+    (swap! parser-atom assoc :current-token peek-tok)
+    (swap! parser-atom assoc :peek-token (lexer/next-token lexer-atom))))
 
 (defn parse-expression [parser-atom precedence]
   (let [current-token-type (get-in @parser-atom [:current-token :type])
@@ -25,13 +50,18 @@
       (do
         (no-prefix-parse-fn-error parser-atom current-token-type)
         nil)
-      (prefix parser-atom))))
-
-(defn next-token [parser-atom]
-  (let [peek-tok (:peek-token @parser-atom)
-        lexer-atom (:lexer @parser-atom)]
-    (swap! parser-atom assoc :current-token peek-tok)
-    (swap! parser-atom assoc :peek-token (lexer/next-token lexer-atom))))
+      (loop [left-exp (prefix parser-atom)]
+        (if (and (not= token/SEMICOLON
+                       (get-in @parser-atom [:peek-token :type]))
+                 (< precedence (peek-precedence parser-atom)))
+          (let [infix (get (:infix-parse-fns @parser-atom)
+                           (get-in @parser-atom [:peek-token :type]))]
+            (if (nil? infix)
+              left-exp
+              (do
+                (next-token parser-atom)
+                (recur (infix parser-atom left-exp)))))
+          left-exp)))))
 
 (defn register-prefix
   [parser-atom token-type prefix-parse-fn]
@@ -76,6 +106,16 @@
      :operator literal
      :right (parse-expression parser-atom PREFIX)}))
 
+(defn parse-infix-expression [parser-atom left]
+  (let [current-token (:current-token @parser-atom)
+        literal (:literal current-token)
+        precedence (current-precendence parser-atom)]
+    (next-token parser-atom)
+    {:token current-token
+     :operator literal
+     :left left
+     :right (parse-expression parser-atom precedence)}))
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -87,6 +127,14 @@
     (register-prefix parser-atom token/INT parse-integer-literal)
     (register-prefix parser-atom token/BANG parse-prefix-expression)
     (register-prefix parser-atom token/MINUS parse-prefix-expression)
+    (register-infix parser-atom token/PLUS parse-infix-expression)
+    (register-infix parser-atom token/MINUS parse-infix-expression)
+    (register-infix parser-atom token/SLASH parse-infix-expression)
+    (register-infix parser-atom token/ASTERISK parse-infix-expression)
+    (register-infix parser-atom token/EQ parse-infix-expression)
+    (register-infix parser-atom token/NOT_EQ parse-infix-expression)
+    (register-infix parser-atom token/LT parse-infix-expression)
+    (register-infix parser-atom token/GT parse-infix-expression)
     (next-token parser-atom)
     (next-token parser-atom)
     parser-atom))

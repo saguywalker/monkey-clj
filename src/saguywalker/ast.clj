@@ -33,9 +33,18 @@
 
 (defn prefix-expression->string [expression]
   (str "("
-        (:operator expression)
-        (expression->string (:operator expression))
-        ")"))
+       (:operator expression)
+       (expression->string (:operator expression))
+       ")"))
+
+(defn infix-expression->string [expression]
+  (str "("
+       (expression->string (:left expression))
+       " "
+       (:operator expression)
+       " "
+       (expression->string (:right expression))
+       ")"))
 
 (defn stmt->string [stmt]
   (let [token-type (get-in stmt [:token :type])]
