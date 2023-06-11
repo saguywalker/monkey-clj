@@ -15,6 +15,7 @@
           l (lexer/new-lexer input)
           p (parser/new-parser l)
           program (parser/parse-program p)]
+      (is (= [] (:errors @p)))
       (is (not= nil program))
       (is (= 3 (count (:statements program))))
       (doseq [[stmt expected] (map vector

@@ -12,10 +12,19 @@
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
-                           :peek-token 0})]
+                           :peek-token 0
+                           :errors []})]
     (next-token parser-atom)
     (next-token parser-atom)
     parser-atom))
+
+(defn- peek-error [parser-atom token-type]
+  (let [peek-tok (get-in @parser-atom [:peek-token :type])]
+    (swap! parser-atom
+           update
+           :errors
+           conj
+           (str "expected next token: " token-type ", got: " peek-tok " instead"))))
 
 (defn- expect-peek [parser-atom token-type]
   (if (= token-type
@@ -23,7 +32,9 @@
     (do
       (next-token parser-atom)
       true)
-    false))
+    (do
+      (peek-error parser-atom token-type)
+      false)))
 
 (defn- parse-let-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)]
