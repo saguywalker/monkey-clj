@@ -23,3 +23,23 @@
                                    ["x", "y", "foobar"])]
         (is (= (token/token-literal stmt) "let"))
         (is (= expected (get-in stmt [:name :value])))))))
+
+(deftest test-return-statement
+  (testing "test parsing return statement"
+    (let [input (string/escape "return 5;
+                               return 10;
+                               return 993322;"
+                               {})
+          l (lexer/new-lexer input)
+          p (parser/new-parser l)
+          program (parser/parse-program p)]
+      (is (= [] (:errors @p)))
+      (is (not= nil program))
+      (is (= 3 (count (:statements program))))
+      (doseq [[stmt expected] (map vector
+                                   (:statements program)
+                                   ["5", "10", "993322"])]
+        (is (= (token/token-literal stmt) "return"))
+;;        (is (= expected (get-in stmt [:return-value])))
+        ))))
+

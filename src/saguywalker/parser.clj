@@ -51,11 +51,19 @@
              :name {:token next-current-token
                     :value (:literal next-current-token)}}))))))
 
+(defn- parse-return-statement [parser-atom]
+  (let [current-token (:current-token @parser-atom)]
+    (next-token parser-atom)
+    (while (not= (get-in @parser-atom [:current-token :type])
+                 token/SEMICOLON)
+      (next-token parser-atom))
+    {:token current-token}))
+
 (defn- parser-statement [parser-atom]
   (let [token-type (get-in @parser-atom [:current-token :type])]
     (cond
-      (= token-type token/LET) (let [result (parse-let-statement parser-atom)]
-                                 result)
+      (= token-type token/LET) (parse-let-statement parser-atom)
+      (= token-type token/RETURN) (parse-return-statement parser-atom)
       :else nil)))
 
 (defn- parse-statements  [parser-atom]
@@ -76,3 +84,4 @@
   @my-test-parser
   (def my-test-parser (new-parser my-test))
   (next-token my-test-parser))
+
