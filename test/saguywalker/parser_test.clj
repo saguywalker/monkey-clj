@@ -74,3 +74,31 @@
       (is (= (ast/integer-literal->value (:expression stmt)) expected))
       (is (= (token/token-literal (:expression stmt)) (str expected))))))
 
+(defn test-integer-literal
+  [expression value]
+    (cond
+      (not= value (:value expression)) false
+      (not= (str value) (token/token-literal expression)) false
+      :else true))
+
+(deftest test-prefix-expression
+  (let [test-cases [{:input "!5;"
+                     :operator "!"
+                     :integer-value 5}
+                    {:input "-15;"
+                     :operator "-"
+                     :integer-value 15}]]
+    (doseq [tt test-cases]
+      (let [l (lexer/new-lexer (:input tt))
+            p (parser/new-parser l)
+            program (parser/parse-program p)
+            expression (:expression (first (:statements program)))]
+        (clojure.pprint/pprint program)
+        (is (= [] (:errors @p)))
+        (is (not= nil program))
+        (is (= 1 (count (:statements program))))
+        (is (= (:operator expression) (:operator tt)))
+        (is (test-integer-literal (:right expression)
+                                  (:integer-value tt)))))))
+
+

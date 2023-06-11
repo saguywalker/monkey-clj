@@ -31,6 +31,12 @@
 (defn- expression-stmt->string [stmt]
   (str (expression->string (:expression stmt))))
 
+(defn prefix-expression->string [expression]
+  (str "("
+        (:operator expression)
+        (expression->string (:operator expression))
+        ")"))
+
 (defn stmt->string [stmt]
   (let [token-type (get-in stmt [:token :type])]
     (cond

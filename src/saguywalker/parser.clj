@@ -11,6 +11,22 @@
 (def PREFIX 6)
 (def CALL 7)
 
+(defn no-prefix-parse-fn-error [parser-atom token-type]
+  (swap! parser-atom
+         update
+         :errors
+         conj
+         (str "no prefix parse function for " token-type " found")))
+
+(defn parse-expression [parser-atom precedence]
+  (let [current-token-type (get-in @parser-atom [:current-token :type])
+        prefix (get (:prefix-parse-fns @parser-atom) current-token-type)]
+    (if (nil? prefix)
+      (do
+        (no-prefix-parse-fn-error parser-atom current-token-type)
+        nil)
+      (prefix parser-atom))))
+
 (defn next-token [parser-atom]
   (let [peek-tok (:peek-token @parser-atom)
         lexer-atom (:lexer @parser-atom)]
@@ -52,6 +68,14 @@
     {:token current-token
      :value value}))
 
+(defn parse-prefix-expression [parser-atom]
+  (let [current-token (:current-token @parser-atom)
+        literal (:literal current-token)]
+    (next-token parser-atom)
+    {:token current-token
+     :operator literal
+     :right (parse-expression parser-atom PREFIX)}))
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -61,6 +85,8 @@
                            :infix-parse-fns {}})]
     (register-prefix parser-atom token/IDENT parse-identifier)
     (register-prefix parser-atom token/INT parse-integer-literal)
+    (register-prefix parser-atom token/BANG parse-prefix-expression)
+    (register-prefix parser-atom token/MINUS parse-prefix-expression)
     (next-token parser-atom)
     (next-token parser-atom)
     parser-atom))
@@ -102,12 +128,6 @@
                  token/SEMICOLON)
       (next-token parser-atom))
     {:token current-token}))
-
-(defn parse-expression [parser-atom precedence]
-  (let [current-token-type (get-in @parser-atom [:current-token :type])
-        prefix (get (:prefix-parse-fns @parser-atom) current-token-type)]
-    (when-not (nil? prefix)
-      (prefix parser-atom))))
 
 (defn parse-expression-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)
