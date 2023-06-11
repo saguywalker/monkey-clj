@@ -58,3 +58,19 @@
                                  ["foobar"])]
       (is (= (ast/expression-stmt->return-value stmt) expected))
       (is (= (token/token-literal stmt) expected)))))
+
+(deftest test-integer-literal-expression
+  (let [input (string/escape "5;"
+                             {})
+        l (lexer/new-lexer input)
+        p (parser/new-parser l)
+        program (parser/parse-program p)]
+    (is (= [] (:errors @p)))
+    (is (not= nil program))
+    (is (= 1 (count (:statements program))))
+    (doseq [[stmt expected] (map vector
+                                 (:statements program)
+                                 [5])]
+      (is (= (ast/integer-literal->value (:expression stmt)) expected))
+      (is (= (token/token-literal (:expression stmt)) (str expected))))))
+

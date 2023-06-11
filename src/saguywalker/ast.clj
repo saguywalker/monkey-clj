@@ -22,6 +22,9 @@
        " "
        (expression-stmt->return-value stmt) ";"))
 
+(defn integer-literal->value [integer-literal]
+  (:value integer-literal))
+
 (defn- expression->string [expression]
   (str expression))
 

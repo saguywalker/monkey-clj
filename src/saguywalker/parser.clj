@@ -39,6 +39,19 @@
   {:token (:current-token @parser-atom)
    :value (get-in @parser-atom [:current-token :literal])})
 
+(defn parse-integer-literal [parser-atom]
+  (let [current-token (:current-token @parser-atom)
+        literal (:literal current-token)
+        value (Integer/parseInt literal)]
+    (when (nil? value)
+      (swap! parser-atom
+             update
+             :errors
+             conj
+             (str "could not parse " literal " as integer")))
+    {:token current-token
+     :value value}))
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -47,6 +60,7 @@
                            :prefix-parse-fns {}
                            :infix-parse-fns {}})]
     (register-prefix parser-atom token/IDENT parse-identifier)
+    (register-prefix parser-atom token/INT parse-integer-literal)
     (next-token parser-atom)
     (next-token parser-atom)
     parser-atom))
