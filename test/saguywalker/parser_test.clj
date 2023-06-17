@@ -7,6 +7,27 @@
             [saguywalker.parser :as parser]
             [saguywalker.token :as token]))
 
+(defn test-integer-literal
+  [expression value]
+  (cond
+    (not= value (:value expression)) false
+    (not= (str value) (token/token-literal expression)) false
+    :else true))
+
+(defn test-identifier
+  [exp value]
+  (cond
+    (not= value (:value exp)) false
+    (not= (str value) (token/token-literal exp)) false
+    :else true))
+
+(defn test-literal-expression
+  [exp expected]
+  (cond
+    (int? expected) (test-integer-literal exp expected)
+    (string? expected) (test-identifier exp expected)
+    :else false))
+
 (deftest test-let-statement
   (testing "test parsing let statement"
     (let [input (string/escape "let x = 5;
@@ -76,13 +97,6 @@
         (is (= (ast/integer-literal->value (:expression stmt)) expected))
         (is (= (token/token-literal (:expression stmt)) (str expected)))))))
 
-(defn test-integer-literal
-  [expression value]
-  (cond
-    (not= value (:value expression)) false
-    (not= (str value) (token/token-literal expression)) false
-    :else true))
-
 (deftest test-prefix-expression
   (testing "test prefix expression"
     (let [test-cases [{:input "!5;"
@@ -146,10 +160,10 @@
           (is (not= nil program))
           (is (= 1 (count (:statements program))))
           (is (= (:operator expression) (:operator tt)))
-          (is (test-integer-literal (:left expression)
-                                    (:left tt)))
-          (is (test-integer-literal (:right expression)
-                                    (:right tt))))))))
+          (is (test-literal-expression (:left expression)
+                                       (:left tt)))
+          (is (test-literal-expression (:right expression)
+                                       (:right tt))))))))
 
 (deftest test-operator-precedence-parsing
   (testing "test operator precedence parsing"
