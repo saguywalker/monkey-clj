@@ -20,6 +20,30 @@
    token/SLASH PRODUCT
    token/ASTERISK PRODUCT})
 
+(defn- peek-error [parser-atom token-type]
+  (let [peek-tok (get-in @parser-atom [:peek-token :type])]
+    (swap! parser-atom
+           update
+           :errors
+           conj
+           (str "expected next token: " token-type ", got: " peek-tok " instead"))))
+
+(defn next-token [parser-atom]
+  (let [peek-tok (:peek-token @parser-atom)
+        lexer-atom (:lexer @parser-atom)]
+    (swap! parser-atom assoc :current-token peek-tok)
+    (swap! parser-atom assoc :peek-token (lexer/next-token lexer-atom))))
+
+(defn- expect-peek [parser-atom token-type]
+  (if (= token-type
+         (get-in @parser-atom [:peek-token :type]))
+    (do
+      (next-token parser-atom)
+      true)
+    (do
+      (peek-error parser-atom token-type)
+      false)))
+
 (defn peek-precedence [parser-atom]
   (get precedences
        (get-in @parser-atom [:peek-token :type])
@@ -36,12 +60,6 @@
          :errors
          conj
          (str "no prefix parse function for " token-type " found")))
-
-(defn next-token [parser-atom]
-  (let [peek-tok (:peek-token @parser-atom)
-        lexer-atom (:lexer @parser-atom)]
-    (swap! parser-atom assoc :current-token peek-tok)
-    (swap! parser-atom assoc :peek-token (lexer/next-token lexer-atom))))
 
 (defn parse-expression [parser-atom precedence]
   (let [current-token-type (get-in @parser-atom [:current-token :type])
@@ -121,6 +139,13 @@
     {:token current-token
      :value (= token/TRUE (:type current-token))}))
 
+(defn parse-grouped-exp [parser-atom]
+  (next-token parser-atom)
+  (let [exp (parse-expression parser-atom LOWEST)]
+    (if (expect-peek parser-atom token/RPAREN)
+      exp
+      nil)))
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -128,6 +153,7 @@
                            :errors []
                            :prefix-parse-fns {}
                            :infix-parse-fns {}})]
+    (register-prefix parser-atom token/LPAREN parse-grouped-exp)
     (register-prefix parser-atom token/TRUE parse-boolean-exp)
     (register-prefix parser-atom token/FALSE parse-boolean-exp)
     (register-prefix parser-atom token/IDENT parse-identifier)
@@ -145,24 +171,6 @@
     (next-token parser-atom)
     (next-token parser-atom)
     parser-atom))
-
-(defn- peek-error [parser-atom token-type]
-  (let [peek-tok (get-in @parser-atom [:peek-token :type])]
-    (swap! parser-atom
-           update
-           :errors
-           conj
-           (str "expected next token: " token-type ", got: " peek-tok " instead"))))
-
-(defn- expect-peek [parser-atom token-type]
-  (if (= token-type
-         (get-in @parser-atom [:peek-token :type]))
-    (do
-      (next-token parser-atom)
-      true)
-    (do
-      (peek-error parser-atom token-type)
-      false)))
 
 (defn- parse-let-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)]
