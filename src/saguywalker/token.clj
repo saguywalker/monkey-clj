@@ -11,7 +11,7 @@
 (def ASSIGN "=")
 (def PLUS "+")
 (def MINUS "-")
-(def BANG "+")
+(def BANG "!")
 (def ASTERISK "*")
 (def SLASH "/")
 (def LT "<")

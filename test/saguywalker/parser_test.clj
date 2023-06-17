@@ -18,6 +18,13 @@
   [exp value]
   (cond
     (not= value (:value exp)) false
+    (not= value (token/token-literal exp)) false
+    :else true))
+
+(defn test-boolean-literal
+  [exp value]
+  (cond
+    (not= value (:value exp)) false
     (not= (str value) (token/token-literal exp)) false
     :else true))
 
@@ -26,6 +33,7 @@
   (cond
     (int? expected) (test-integer-literal exp expected)
     (string? expected) (test-identifier exp expected)
+    (boolean? expected) (test-boolean-literal exp expected)
     :else false))
 
 (deftest test-let-statement
@@ -166,7 +174,20 @@
                       {:input "5 != 6;"
                        :left 5
                        :operator "!="
-                       :right 6}]]
+                       :right 6}
+                      {:input "true == true"
+                       :left true
+                       :operator "=="
+                       :right true}
+                      {:input "true != false"
+                       :left true
+                       :operator "!="
+                       :right false}
+                      {:input "false == false"
+                       :left false
+                       :operator "=="
+                       :right false}]]
+
       (doseq [tt test-cases]
         (let [l (lexer/new-lexer (:input tt))
               p (parser/new-parser l)
@@ -201,6 +222,14 @@
                   :expected "(3 + 4)((-5) * 5)"}
                  {:input "5 > 4 == 3 < 4"
                   :expected "((5 > 4) == (3 < 4))"}
+                 {:input "true"
+                  :expected "true"}
+                 {:input "false"
+                  :expected "false"}
+                 {:input "3 > 5 == false"
+                  :expected "((3 > 5) == false)"}
+                 {:input "3 < 5 == true"
+                  :expected "((3 < 5) == true)"}
                  {:input "3 + 4 * 5 == 3 * 1 + 4 * 5"
                   :expected "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"}]]
       (doseq [tt tests]
@@ -210,3 +239,19 @@
               actual (ast/program->string program)]
           (is (= [] (:errors @p)))
           (is (=  actual (:expected tt))))))))
+
+(deftest test-parsing-prefix-expression
+  (testing "test parsing prefix expression"
+    (doseq [tt [{:input "!true"
+                 :operator "!"
+                 :value true}
+                {:input "!false"
+                 :operator "!"
+                 :value false}]]
+      (let [l (lexer/new-lexer (:input tt))
+            p (parser/new-parser l)
+            program (parser/parse-program p)
+            exp (first (:statements program))]
+        (is (= [] (:errors @p)))
+        (is (= (get-in exp [:expression :right :value]) (:value tt)))
+        (is (= (get-in exp [:expression :operator]) (:operator tt)))))))
