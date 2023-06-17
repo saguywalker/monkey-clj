@@ -25,26 +25,33 @@
 (defn integer-literal->value [integer-literal]
   (:value integer-literal))
 
-(defn- expression->string [expression]
-  (str expression))
+(defn- infix? [expression]
+  (and (map? expression)
+       (contains? expression :left)
+       (contains? expression :right)))
+
+(defn- prefix? [expression]
+  (and (map? expression)
+       (not (infix? expression))
+       (contains? expression :operator)))
+
+(defn- expression->string [exp]
+  (cond
+    (infix? exp) (str "("
+                      (expression->string (:left exp))
+                      " "
+                      (:operator exp)
+                      " "
+                      (expression->string (:right exp))
+                      ")")
+    (prefix? exp) (str "("
+                       (:operator exp)
+                       (expression->string (:right exp))
+                       ")")
+    :else (str (:value exp))))
 
 (defn- expression-stmt->string [stmt]
-  (str (expression->string (:expression stmt))))
-
-(defn prefix-expression->string [expression]
-  (str "("
-       (:operator expression)
-       (expression->string (:operator expression))
-       ")"))
-
-(defn infix-expression->string [expression]
-  (str "("
-       (expression->string (:left expression))
-       " "
-       (:operator expression)
-       " "
-       (expression->string (:right expression))
-       ")"))
+  (expression->string (:expression stmt)))
 
 (defn stmt->string [stmt]
   (let [token-type (get-in stmt [:token :type])]
