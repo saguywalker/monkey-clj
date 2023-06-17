@@ -116,6 +116,11 @@
      :left left
      :right (parse-expression parser-atom precedence)}))
 
+(defn parse-boolean-exp [parser-atom]
+  (let [current-token (:current-token @parser-atom)]
+    {:token current-token
+     :value (= token/TRUE (:type current-token))}))
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -123,6 +128,8 @@
                            :errors []
                            :prefix-parse-fns {}
                            :infix-parse-fns {}})]
+    (register-prefix parser-atom token/TRUE parse-boolean-exp)
+    (register-prefix parser-atom token/FALSE parse-boolean-exp)
     (register-prefix parser-atom token/IDENT parse-identifier)
     (register-prefix parser-atom token/INT parse-integer-literal)
     (register-prefix parser-atom token/BANG parse-prefix-expression)

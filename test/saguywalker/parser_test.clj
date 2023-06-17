@@ -81,6 +81,22 @@
         (is (= (ast/expression-stmt->return-value stmt) expected))
         (is (= (token/token-literal stmt) expected))))))
 
+(deftest test-boolean-expression
+  (testing "test boolean expression"
+    (let [input (string/escape "true;"
+                               {})
+          l (lexer/new-lexer input)
+          p (parser/new-parser l)
+          program (parser/parse-program p)]
+      (is (= [] (:errors @p)))
+      (is (not= nil program))
+      (is (= 1 (count (:statements program))))
+      (doseq [[stmt expected] (map vector
+                                   (:statements program)
+                                   [true])]
+        (is (= (ast/expression-stmt->return-value stmt) expected))
+        (is (= (token/token-literal stmt) (str expected)))))))
+
 (deftest test-integer-literal-expression
   (testing "test integer literal expression"
     (let [input (string/escape "5;"
