@@ -251,7 +251,13 @@
                  {:input "-(5 + 5)"
                   :expected "(-(5 + 5))"}
                  {:input "!(true == true)"
-                  :expected "(!(true == true))"}]]
+                  :expected "(!(true == true))"}
+                 {:input "a + add(b * c) + d"
+                  :expected "((a + add((b * c))) + d)"}
+                 {:input "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))"
+                  :expected "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"}
+                 {:input "add(a + b + c * d / f + g)"
+                  :expected "add((((a + b) + ((c * d) / f)) + g))"}]]
 
       (doseq [tt tests]
         (let [l (lexer/new-lexer (:input tt))
@@ -308,10 +314,26 @@
         (is (test-literal-expression (first params) "x"))
         (is (test-literal-expression (first (rest params)) "y"))
         (is (= 1 (count body-stmts)))
-        (is (do-test-infix-expression (:expression (first body-stmts)) 
-                                      "x" 
-                                      "+" 
+        (is (do-test-infix-expression (:expression (first body-stmts))
+                                      "x"
+                                      "+"
                                       "y"))))))
+
+(deftest test-call-expression
+  (testing "test call expression"
+    (doseq [tt ["add(1, 2 * 3, 4 + 5);"]]
+      (let [l (lexer/new-lexer tt)
+            p (parser/new-parser l)
+            program (parser/parse-program p)
+            exp (:expression (first (:statements program)))
+            args (:arguments exp)]
+        (is (= [] (:errors @p)))
+        (is (= (count (:statements program)) 1))
+        (is (test-identifier (:function exp) "add"))
+        (is (= 3 (count args)))
+        (is (test-literal-expression (nth args 0) 1))
+        (is (do-test-infix-expression (nth args 1) 2 "*" 3))
+        (is (do-test-infix-expression (nth args 2) 4 "+" 5))))))
 
 (comment
   (def res (parser/parse-program (parser/new-parser (lexer/new-lexer "if (x < y) { x }"))))

@@ -19,7 +19,8 @@
    token/PLUS SUM
    token/MINUS SUM
    token/SLASH PRODUCT
-   token/ASTERISK PRODUCT})
+   token/ASTERISK PRODUCT
+   token/LPAREN CALL})
 
 (defn- peek-error [parser-atom token-type]
   (let [peek-tok (get-in @parser-atom [:peek-token :type])]
@@ -257,6 +258,29 @@
            :parameters params
            :body (parse-block-statement parser-atom)})))))
 
+(defn parse-call-arguments [parser-atom]
+  (if (= token/RPAREN (get-in @parser-atom [:peek-token :type]))
+    (do
+      (next-token parser-atom)
+      [])
+    (do
+      (next-token parser-atom)
+      (let [args
+            (loop [acc [(parse-expression parser-atom LOWEST)]]
+              (if (= token/COMMA (get-in @parser-atom [:peek-token :type]))
+                (do
+                  (next-token parser-atom)
+                  (next-token parser-atom)
+                  (recur (conj acc (parse-expression parser-atom LOWEST))))
+                acc))]
+        (when (expect-peek parser-atom token/RPAREN)
+          args)))))
+
+(defn parse-call-expression [parser-atom func]
+  {:token (:current-token @parser-atom)
+   :function func
+   :arguments (parse-call-arguments parser-atom)})
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -281,6 +305,7 @@
     (register-infix parser-atom token/NOT_EQ parse-infix-expression)
     (register-infix parser-atom token/LT parse-infix-expression)
     (register-infix parser-atom token/GT parse-infix-expression)
+    (register-infix parser-atom token/LPAREN parse-call-expression)
     (next-token parser-atom)
     (next-token parser-atom)
     parser-atom))

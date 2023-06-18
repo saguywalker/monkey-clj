@@ -46,6 +46,11 @@
        (contains? exp :parameters)
        (contains? exp :body)))
 
+(defn- call-exp? [exp]
+  (and (map? exp)
+       (contains? exp :function)
+       (contains? exp :arguments)))
+
 (defn- expression->string [exp]
   (cond
     (infix? exp) (str "("
@@ -73,18 +78,25 @@
                                       []
                                       alt))))
     (fn-exp? exp) (let [params (string/join ", "
-                                        (map expression->string
-                                             (:parameters exp)))
-                    tok-literal (token/token-literal exp)
-                    body (reduce (fn [acc e]
-                                   (conj acc (expression->string e)))
-                                 []
-                                 (:body exp))]
-                (str tok-literal
-                     "("
-                     params
-                     ") "
-                     body))
+                                            (map expression->string
+                                                 (:parameters exp)))
+                        tok-literal (token/token-literal exp)
+                        body (reduce (fn [acc e]
+                                       (conj acc (expression->string e)))
+                                     []
+                                     (:body exp))]
+                    (str tok-literal
+                         "("
+                         params
+                         ") "
+                         body))
+    (call-exp? exp) (let [args (string/join ", "
+                                            (map expression->string
+                                                 (:arguments exp)))]
+                      (str (expression->string (:function exp))
+                           "("
+                           args
+                           ")"))
     :else (str (:value exp))))
 
 (defn- expression-stmt->string [stmt]
