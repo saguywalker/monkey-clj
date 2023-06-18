@@ -188,9 +188,8 @@
 (defn parse-grouped-exp [parser-atom]
   (next-token parser-atom)
   (let [exp (parse-expression parser-atom LOWEST)]
-    (if (expect-peek parser-atom token/RPAREN)
-      exp
-      nil)))
+    (when (expect-peek parser-atom token/RPAREN)
+      exp)))
 
 (defn parse-block-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)]
