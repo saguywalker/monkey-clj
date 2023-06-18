@@ -226,6 +226,37 @@
                            (parse-block-statement parser-atom))))
                 result))))))))
 
+(defn parse-function-parameters [parser-atom]
+  (if (= token/RPAREN (get-in @parser-atom [:peek-token :type]))
+    (do
+      (next-token parser-atom)
+      [])
+    (do
+      (next-token parser-atom)
+      (let [identifiers
+            (loop [acc [{:token (:current-token @parser-atom)
+                         :value (get-in @parser-atom [:current-token :literal])}]]
+              (if (= token/COMMA (get-in @parser-atom [:peek-token :type]))
+                (do
+                  (next-token parser-atom)
+                  (next-token parser-atom)
+                  (recur (conj acc
+                               {:token (:current-token @parser-atom)
+                                :value (get-in @parser-atom
+                                               [:current-token :literal])})))
+                acc))]
+        (when (expect-peek parser-atom token/RPAREN)
+          identifiers)))))
+
+(defn parse-function-literal [parser-atom]
+  (let [current-token (:current-token @parser-atom)]
+    (when (expect-peek parser-atom token/LPAREN)
+      (let [params (parse-function-parameters parser-atom)]
+        (when (expect-peek parser-atom token/LBRACE)
+          {:token current-token
+           :parameters params
+           :body (parse-block-statement parser-atom)})))))
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -233,6 +264,7 @@
                            :errors []
                            :prefix-parse-fns {}
                            :infix-parse-fns {}})]
+    (register-prefix parser-atom token/FUNCTION parse-function-literal)
     (register-prefix parser-atom token/IF parse-if-exp)
     (register-prefix parser-atom token/LPAREN parse-grouped-exp)
     (register-prefix parser-atom token/TRUE parse-boolean-exp)

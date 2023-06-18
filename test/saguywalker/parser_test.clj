@@ -288,10 +288,30 @@
         (is (= (count (:statements program)) 1))
         (is (do-test-infix-expression (:condition exp) "x" "<" "y"))
         (is (test-identifier (:expression (first (get-in exp
-                                                         [:consequence 
+                                                         [:consequence
                                                           :statements])))
                              "x"))
         (is (nil? (:alternative exp)))))))
+
+(deftest test-function-literal-expression
+  (testing "test function literal expression"
+    (doseq [tt ["fn(x, y) { x + y; }"]]
+      (let [l (lexer/new-lexer tt)
+            p (parser/new-parser l)
+            program (parser/parse-program p)
+            exp (:expression (first (:statements program)))
+            params (:parameters exp)
+            body-stmts (get-in exp [:body :statements])]
+        (is (= [] (:errors @p)))
+        (is (= (count (:statements program)) 1))
+        (is (= 2 (count params)))
+        (is (test-literal-expression (first params) "x"))
+        (is (test-literal-expression (first (rest params)) "y"))
+        (is (= 1 (count body-stmts)))
+        (is (do-test-infix-expression (:expression (first body-stmts)) 
+                                      "x" 
+                                      "+" 
+                                      "y"))))))
 
 (comment
   (def res (parser/parse-program (parser/new-parser (lexer/new-lexer "if (x < y) { x }"))))

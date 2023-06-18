@@ -1,5 +1,6 @@
 (ns saguywalker.ast
-  (:require [saguywalker.token :as token]))
+  (:require [clojure.string :as string]
+            [saguywalker.token :as token]))
 
 (defn let-stmt->name-string [stmt]
   (get-in stmt [:name :token :literal]))
@@ -40,6 +41,11 @@
        (not (infix? expression))
        (contains? expression :operator)))
 
+(defn- fn-exp? [exp]
+  (and (map? exp)
+       (contains? exp :parameters)
+       (contains? exp :body)))
+
 (defn- expression->string [exp]
   (cond
     (infix? exp) (str "("
@@ -66,6 +72,19 @@
                                         (conj acc (expression->string e)))
                                       []
                                       alt))))
+    (fn-exp? exp) (let [params (string/join ", "
+                                        (map expression->string
+                                             (:parameters exp)))
+                    tok-literal (token/token-literal exp)
+                    body (reduce (fn [acc e]
+                                   (conj acc (expression->string e)))
+                                 []
+                                 (:body exp))]
+                (str tok-literal
+                     "("
+                     params
+                     ") "
+                     body))
     :else (str (:value exp))))
 
 (defn- expression-stmt->string [stmt]
