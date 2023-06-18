@@ -25,6 +25,11 @@
 (defn integer-literal->value [integer-literal]
   (:value integer-literal))
 
+(defn- if-exp? [exp]
+  (and (map? exp)
+       (contains? exp :condition)
+       (contains? exp :consequence)))
+
 (defn- infix? [expression]
   (and (map? expression)
        (contains? expression :left)
@@ -48,6 +53,19 @@
                        (:operator exp)
                        (expression->string (:right exp))
                        ")")
+    (if-exp? exp) (str "if"
+                       (expression->string (:condition exp))
+                       " "
+                       (reduce (fn [acc e]
+                                 (conj acc (expression->string e)))
+                               []
+                               (:consequence exp))
+                       (when-let [alt (:alternative exp)]
+                         (str "else "
+                              (reduce (fn [acc e]
+                                        (conj acc (expression->string e)))
+                                      []
+                                      alt))))
     :else (str (:value exp))))
 
 (defn- expression-stmt->string [stmt]

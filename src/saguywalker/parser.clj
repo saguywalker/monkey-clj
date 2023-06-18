@@ -1,6 +1,7 @@
 (ns saguywalker.parser
   (:require   [saguywalker.lexer :as lexer]
-              [saguywalker.token :as token]))
+              [saguywalker.token :as token]
+              [clojure.pprint]))
 
 (def LOWEST 1)
 (def EQUALS 2)
@@ -99,6 +100,51 @@
          token-type
          infix-parse-fn))
 
+(defn- parse-let-statement [parser-atom]
+  (let [current-token (:current-token @parser-atom)]
+    (when (expect-peek parser-atom token/IDENT)
+      (let [next-current-token (:current-token @parser-atom)]
+        (when  (expect-peek parser-atom token/ASSIGN)
+          (while (not= (get-in @parser-atom [:current-token :type])
+                       token/SEMICOLON)
+            (next-token parser-atom))
+          {:token current-token
+           :name {:token next-current-token
+                  :value (:literal next-current-token)}})))))
+
+(defn- parse-return-statement [parser-atom]
+  (let [current-token (:current-token @parser-atom)]
+    (next-token parser-atom)
+    (while (not= (get-in @parser-atom [:current-token :type])
+                 token/SEMICOLON)
+      (next-token parser-atom))
+    {:token current-token}))
+
+(defn parse-expression-statement [parser-atom]
+  (let [current-token (:current-token @parser-atom)
+        expression (parse-expression parser-atom LOWEST)]
+    (when (= token/SEMICOLON (get-in @parser-atom [:peek-token :type]))
+      (next-token parser-atom))
+    {:token current-token
+     :expression expression}))
+
+(defn- parse-statement [parser-atom]
+  (let [token-type (get-in @parser-atom [:current-token :type])]
+    (cond
+      (= token-type token/LET) (parse-let-statement parser-atom)
+      (= token-type token/RETURN) (parse-return-statement parser-atom)
+      :else (parse-expression-statement parser-atom))))
+
+(defn- parse-statements  [parser-atom]
+  (filter some?
+          (loop [stmts []]
+            (if (= token/EOF
+                   (get-in @parser-atom [:current-token :type]))
+              stmts
+              (let [stmt (parse-statement parser-atom)]
+                (next-token parser-atom)
+                (recur (conj stmts stmt)))))))
+
 (defn parse-identifier [parser-atom]
   {:token (:current-token @parser-atom)
    :value (get-in @parser-atom [:current-token :literal])})
@@ -146,6 +192,41 @@
       exp
       nil)))
 
+(defn parse-block-statement [parser-atom]
+  (let [current-token (:current-token @parser-atom)]
+    (next-token parser-atom)
+    {:token current-token
+     :statements (loop [stmts []]
+                   (if  (or (= token/RBRACE
+                               (get-in @parser-atom [:current-token :type]))
+                            (= token/EOF
+                               (get-in @parser-atom [:current-token :type])))
+                     stmts
+                     (let [stmt (parse-statement parser-atom)]
+                       (next-token parser-atom)
+                       (if (nil? stmt)
+                         (recur stmts)
+                         (recur (conj stmts stmt))))))}))
+
+(defn parse-if-exp [parser-atom]
+  (let [current-token (:current-token @parser-atom)]
+    (when (expect-peek parser-atom token/LPAREN)
+      (next-token parser-atom)
+      (let [condition (parse-expression parser-atom LOWEST)]
+        (when (expect-peek parser-atom token/RPAREN)
+          (when (expect-peek parser-atom token/LBRACE)
+            (let [result {:token current-token
+                          :condition condition
+                          :consequence (parse-block-statement parser-atom)}]
+              (if (= token/ELSE (get-in @parser-atom [:peek-token :type]))
+                (do
+                  (next-token parser-atom)
+                  (when (expect-peek parser-atom token/LBRACE)
+                    (assoc result
+                           :alternative
+                           (parse-block-statement parser-atom))))
+                result))))))))
+
 (defn new-parser [lexer-atom]
   (let [parser-atom (atom {:lexer lexer-atom
                            :current-token 0
@@ -153,6 +234,7 @@
                            :errors []
                            :prefix-parse-fns {}
                            :infix-parse-fns {}})]
+    (register-prefix parser-atom token/IF parse-if-exp)
     (register-prefix parser-atom token/LPAREN parse-grouped-exp)
     (register-prefix parser-atom token/TRUE parse-boolean-exp)
     (register-prefix parser-atom token/FALSE parse-boolean-exp)
@@ -172,51 +254,6 @@
     (next-token parser-atom)
     parser-atom))
 
-(defn- parse-let-statement [parser-atom]
-  (let [current-token (:current-token @parser-atom)]
-    (when (expect-peek parser-atom token/IDENT)
-      (let [next-current-token (:current-token @parser-atom)]
-        (when  (expect-peek parser-atom token/ASSIGN)
-          (while (not= (get-in @parser-atom [:current-token :type])
-                       token/SEMICOLON)
-            (next-token parser-atom))
-          {:token current-token
-           :name {:token next-current-token
-                  :value (:literal next-current-token)}})))))
-
-(defn- parse-return-statement [parser-atom]
-  (let [current-token (:current-token @parser-atom)]
-    (next-token parser-atom)
-    (while (not= (get-in @parser-atom [:current-token :type])
-                 token/SEMICOLON)
-      (next-token parser-atom))
-    {:token current-token}))
-
-(defn parse-expression-statement [parser-atom]
-  (let [current-token (:current-token @parser-atom)
-        expression (parse-expression parser-atom LOWEST)]
-    (when (= token/SEMICOLON (get-in @parser-atom [:peek-token :type]))
-      (next-token parser-atom))
-    {:token current-token
-     :expression expression}))
-
-(defn- parser-statement [parser-atom]
-  (let [token-type (get-in @parser-atom [:current-token :type])]
-    (cond
-      (= token-type token/LET) (parse-let-statement parser-atom)
-      (= token-type token/RETURN) (parse-return-statement parser-atom)
-      :else (parse-expression-statement parser-atom))))
-
-(defn- parse-statements  [parser-atom]
-  (filter some?
-          (loop [stmts []]
-            (if (= token/EOF
-                   (get-in @parser-atom [:current-token :type]))
-              stmts
-              (let [stmt (parser-statement parser-atom)]
-                (next-token parser-atom)
-                (recur (conj stmts stmt)))))))
-
 (defn parse-program [parser-atom]
   {:statements (parse-statements parser-atom)})
 
@@ -225,5 +262,9 @@
   @my-test-parser
   (def my-test-parser (new-parser my-test))
   (next-token my-test-parser)
-  (register-infix my-test-parser token/EQ "hello world"))
+  (register-infix my-test-parser token/EQ "hello world")
+
+  (def res (parse-program (new-parser (lexer/new-lexer "if (x < y) { x }"))))
+  (:consequence (:expression (first (:statements res))))
+  (clojure.pprint/pprint res))
 

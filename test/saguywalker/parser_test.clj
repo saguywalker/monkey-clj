@@ -36,6 +36,12 @@
     (boolean? expected) (test-boolean-literal exp expected)
     :else false))
 
+(defn do-test-infix-expression
+  [exp left op right]
+  (is (= (:operator exp) op))
+  (is (test-literal-expression (:left exp) left))
+  (is (test-literal-expression (:right exp) right)))
+
 (deftest test-let-statement
   (testing "test parsing let statement"
     (let [input (string/escape "let x = 5;
@@ -196,6 +202,10 @@
           (is (= [] (:errors @p)))
           (is (not= nil program))
           (is (= 1 (count (:statements program))))
+          (is (do-test-infix-expression expression
+                                        (:left tt)
+                                        (:operator tt)
+                                        (:right tt)))
           (is (= (:operator expression) (:operator tt)))
           (is (test-literal-expression (:left expression)
                                        (:left tt)))
@@ -266,3 +276,23 @@
         (is (= [] (:errors @p)))
         (is (= (get-in exp [:expression :right :value]) (:value tt)))
         (is (= (get-in exp [:expression :operator]) (:operator tt)))))))
+
+(deftest test-if-expression
+  (testing "test if expression"
+    (doseq [tt ["if (x < y) { x }"]]
+      (let [l (lexer/new-lexer tt)
+            p (parser/new-parser l)
+            program (parser/parse-program p)
+            exp (:expression (first (:statements program)))]
+        (is (= [] (:errors @p)))
+        (is (= (count (:statements program)) 1))
+        (is (do-test-infix-expression (:condition exp) "x" "<" "y"))
+        (is (test-identifier (:expression (first (get-in exp
+                                                         [:consequence 
+                                                          :statements])))
+                             "x"))
+        (is (nil? (:alternative exp)))))))
+
+(comment
+  (def res (parser/parse-program (parser/new-parser (lexer/new-lexer "if (x < y) { x }"))))
+  (:consequence (:expression (first (:statements res)))))
