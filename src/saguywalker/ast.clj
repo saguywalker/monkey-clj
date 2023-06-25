@@ -1,5 +1,6 @@
 (ns saguywalker.ast
   (:require [clojure.string :as string]
+            [saguywalker.object :as object]
             [saguywalker.token :as token]))
 
 (defn expression-stmt->return-value [stmt]
