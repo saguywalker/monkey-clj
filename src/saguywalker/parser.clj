@@ -106,20 +106,25 @@
     (when (expect-peek parser-atom token/IDENT)
       (let [next-current-token (:current-token @parser-atom)]
         (when  (expect-peek parser-atom token/ASSIGN)
-          (while (not= (get-in @parser-atom [:current-token :type])
-                       token/SEMICOLON)
-            (next-token parser-atom))
-          {:token current-token
-           :name {:token next-current-token
-                  :value (:literal next-current-token)}})))))
+          (next-token parser-atom)
+          (let [value (parse-expression parser-atom LOWEST)]
+            (when (= (get-in @parser-atom [:peek-token :type])
+                     token/SEMICOLON)
+              (next-token parser-atom)
+              {:token current-token
+               :name {:token next-current-token
+                      :value (:literal next-current-token)}
+               :value value})))))))
 
 (defn- parse-return-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)]
     (next-token parser-atom)
-    (while (not= (get-in @parser-atom [:current-token :type])
-                 token/SEMICOLON)
-      (next-token parser-atom))
-    {:token current-token}))
+    (let [return-value (parse-expression parser-atom LOWEST)]
+      (when (= (get-in @parser-atom [:peek-token :type])
+               token/SEMICOLON)
+        (next-token parser-atom)
+        {:token current-token
+         :return-value return-value}))))
 
 (defn parse-expression-statement [parser-atom]
   (let [current-token (:current-token @parser-atom)

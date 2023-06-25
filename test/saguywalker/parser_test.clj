@@ -44,21 +44,25 @@
 
 (deftest test-let-statement
   (testing "test parsing let statement"
-    (let [input (string/escape "let x = 5;
-                               let y = 10;
-                               let foobar = 838383;"
-                               {})
-          l (lexer/new-lexer input)
-          p (parser/new-parser l)
-          program (parser/parse-program p)]
-      (is (= [] (:errors @p)))
-      (is (not= nil program))
-      (is (= 3 (count (:statements program))))
-      (doseq [[stmt expected] (map vector
-                                   (:statements program)
-                                   ["x", "y", "foobar"])]
+    (doseq [tt [{:input "let x = 5;"
+                 :expected-ident "x"
+                 :expected-value 5}
+                {:input "let y = true;"
+                 :expected-ident "y"
+                 :expected-value true}
+                {:input "let foobar = y;"
+                 :expected-ident "foobar"
+                 :expected-value "y"}]]
+      (let [l (lexer/new-lexer (:input tt))
+            p (parser/new-parser l)
+            program (parser/parse-program p)
+            stmt (first (:statements program))]
+        (is (= [] (:errors @p)))
+        (is (not= nil program))
+        (is (= 1 (count (:statements program))))
         (is (= (token/token-literal stmt) "let"))
-        (is (= expected (get-in stmt [:name :value])))))))
+        (is (= (:expected-ident tt) (token/token-literal (:name stmt))))
+        (is (= (:expected-value tt) (get-in stmt [:value :value])))))))
 
 (deftest test-return-statement
   (testing "test parsing return statement"
@@ -74,10 +78,9 @@
       (is (= 3 (count (:statements program))))
       (doseq [[stmt expected] (map vector
                                    (:statements program)
-                                   ["5", "10", "993322"])]
+                                   [5, 10, 993322])]
         (is (= (token/token-literal stmt) "return"))
-;;        (is (= expected (get-in stmt [:return-value])))
-        ))))
+        (is (= expected (get-in stmt [:return-value :value])))))))
 
 (deftest test-identifier-expression
   (testing "test identifier expression"
