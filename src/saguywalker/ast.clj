@@ -2,19 +2,6 @@
   (:require [clojure.string :as string]
             [saguywalker.token :as token]))
 
-(defn let-stmt->name-string [stmt]
-  (get-in stmt [:name :token :literal]))
-
-(defn let-stmt->value-string [stmt]
-  (get-in stmt [:name :value :token :literal]))
-
-(defn- let-stmt->string [stmt]
-  (str (token/token-literal stmt)
-       " "
-       (let-stmt->name-string stmt)
-       " = "
-       (let-stmt->value-string stmt) ";"))
-
 (defn expression-stmt->return-value [stmt]
   (get-in stmt [:expression :value]))
 
@@ -102,6 +89,16 @@
 (defn- expression-stmt->string [stmt]
   (expression->string (:expression stmt)))
 
+(defn let-stmt->name-string [stmt]
+  (get-in stmt [:name :token :literal]))
+
+(defn- let-stmt->string [stmt]
+  (str (token/token-literal stmt)
+       " "
+       (let-stmt->name-string stmt)
+       " = "
+       (expression->string (:value stmt)) ";"))
+
 (defn stmt->string [stmt]
   (let [token-type (get-in stmt [:token :type])]
     (cond
@@ -115,8 +112,4 @@
           ""
           (:statements program)))
 
-(defn token-literal-from-program [program]
-  (let [statements (:statements program)]
-    (if (pos? (count statements))
-      (token/token-literal (first statements))
-      "")))
+
