@@ -1,7 +1,9 @@
 (ns saguywalker.repl
   (:require  [clojure.pprint :as pp]
              [saguywalker.ast :as ast]
+             [saguywalker.evaluator :as evaluator]
              [saguywalker.lexer :as lexer]
+             [saguywalker.object :as object]
              [saguywalker.token :as token]
              [saguywalker.parser :as parser]))
 
@@ -19,11 +21,11 @@
   (let [line (read-line)
         lexer-atom (lexer/new-lexer line)
         parser-atom (parser/new-parser lexer-atom)
-        program (parser/parse-program parser-atom)]
+        program (parser/parse-program parser-atom)
+        evaluated (evaluator/eval-node program)]
     (when (not= (count (:errors program)) 0)
       (pp/pprint (:errors program)))
-    (pp/pprint program)
-    (pp/pprint (ast/program->string program))
+    (pp/pprint (object/inspect evaluated))
     (recur)))
 
 (comment
