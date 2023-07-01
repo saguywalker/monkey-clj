@@ -14,27 +14,27 @@
 (defn integer-literal->value [integer-literal]
   (:value integer-literal))
 
-(defn- if-exp? [exp]
+(defn if-exp? [exp]
   (and (map? exp)
        (contains? exp :condition)
        (contains? exp :consequence)))
 
-(defn- infix? [expression]
+(defn infix? [expression]
   (and (map? expression)
        (contains? expression :left)
        (contains? expression :right)))
 
-(defn- prefix? [expression]
+(defn prefix? [expression]
   (and (map? expression)
        (not (infix? expression))
        (contains? expression :operator)))
 
-(defn- fn-exp? [exp]
+(defn fn-exp? [exp]
   (and (map? exp)
        (contains? exp :parameters)
        (contains? exp :body)))
 
-(defn- call-exp? [exp]
+(defn call-exp? [exp]
   (and (map? exp)
        (contains? exp :function)
        (contains? exp :arguments)))

@@ -4,8 +4,10 @@
 (def BOOLEAN-OBJ "BOOLEAN")
 (def NULL-OBJ "NULL")
 
+(def null-obj {:type NULL-OBJ})
+
 (defn integer-obj [i]
-  {:type INTEGER-OBJ 
+  {:type INTEGER-OBJ
    :value i})
 
 (defn boolean-obj [b]
