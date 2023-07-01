@@ -34,6 +34,27 @@
     (= operator "-") (eval-minus-operator-expression right)
     :else NULL))
 
+(defn eval-integer-infix-expression
+  [operator left right]
+  (let [left-value (:value left)
+        right-value (:value right)]
+    (cond
+      (= operator "+") (object/integer-obj (+ left-value right-value))
+      (= operator "-") (object/integer-obj (- left-value right-value))
+      (= operator "*") (object/integer-obj (* left-value right-value))
+      (= operator "/") (object/integer-obj (/ left-value right-value))
+      :else NULL)))
+
+(defn eval-infix-expression
+  [operator left right]
+  (cond
+    (and (= (:type left) object/INTEGER-OBJ)
+         (= (:type right) object/INTEGER-OBJ)) (eval-integer-infix-expression
+                                                operator
+                                                left
+                                                right)
+    :else NULL))
+
 (defn eval-node [node]
   (let [node-type (get-in node [:token :type])]
     (cond
@@ -42,6 +63,9 @@
                                              (eval-node stmt))
                                            nil
                                            (:statements node))
+      (ast/infix? node) (eval-infix-expression (:operator node)
+                                               (eval-node (:left node))
+                                               (eval-node (:right node)))
       (ast/prefix? node) (eval-prefix-expression (:operator node)
                                                  (eval-node (:right node)))
       (contains? node :expression) (eval-node (:expression node))
