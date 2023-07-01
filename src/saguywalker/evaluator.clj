@@ -45,7 +45,7 @@
       (= operator "/") (object/integer-obj (/ left-value right-value))
       (= operator "<") (native-bool-to-bool-obj (< left-value right-value))
       (= operator ">") (native-bool-to-bool-obj (> left-value right-value))
-      (= operator "==") (native-bool-to-bool-obj (== left-value right-value))
+      (= operator "==") (native-bool-to-bool-obj (= left-value right-value))
       (= operator "!=") (native-bool-to-bool-obj (not= left-value right-value))
       :else NULL)))
 
@@ -57,6 +57,8 @@
                                                 operator
                                                 left
                                                 right)
+    (= operator "==") (native-bool-to-bool-obj (= left right))
+    (= operator "!=") (native-bool-to-bool-obj (not= left right))
     :else NULL))
 
 (defn eval-node [node]
