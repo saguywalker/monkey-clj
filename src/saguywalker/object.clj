@@ -4,6 +4,14 @@
 (def BOOLEAN-OBJ "BOOLEAN")
 (def NULL-OBJ "NULL")
 
+(defn integer-obj [i]
+  {:type INTEGER-OBJ 
+   :value i})
+
+(defn boolean-obj [b]
+  {:type BOOLEAN-OBJ
+   :value b})
+
 (defn inspect [obj]
   (let [obj-type (:type obj)]
     (cond

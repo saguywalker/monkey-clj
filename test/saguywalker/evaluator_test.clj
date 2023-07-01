@@ -25,3 +25,13 @@
       (let [actual (test-eval (:input tt))]
         (is (test-integer-object actual (:expected tt)))))))
 
+(deftest test-eval-boolean-expression
+  (testing "test eval boolean expression"
+    (doseq [tt [{:input "true"
+                 :expected true}
+                {:input "false"
+                 :expected false}]]
+      (let [actual (test-eval (:input tt))]
+        (is (test-integer-object actual (:expected tt)))))))
+
+
