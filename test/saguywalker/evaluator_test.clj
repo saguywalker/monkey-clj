@@ -59,10 +59,16 @@
 
 (deftest test-eval-boolean-expression
   (testing "test eval boolean expression"
-    (doseq [tt [{:input "true"
-                 :expected true}
-                {:input "false"
-                 :expected false}]]
+    (doseq [tt [{:input "true" :expected true}
+                {:input "false" :expected false}
+                {:input "1 < 2" :expected true}
+                {:input "1 > 2" :expected false}
+                {:input "1 < 1" :expected false}
+                {:input "1 > 1" :expected false}
+                {:input "1 == 1" :expected true}
+                {:input "1 != 1" :expected false}
+                {:input "1 == 2" :expected false}
+                {:input "1 != 2" :expected true}]]
       (let [actual (test-eval (:input tt))]
         (is (test-boolean-object actual (:expected tt)))))))
 

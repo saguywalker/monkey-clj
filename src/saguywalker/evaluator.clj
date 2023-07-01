@@ -43,6 +43,10 @@
       (= operator "-") (object/integer-obj (- left-value right-value))
       (= operator "*") (object/integer-obj (* left-value right-value))
       (= operator "/") (object/integer-obj (/ left-value right-value))
+      (= operator "<") (native-bool-to-bool-obj (< left-value right-value))
+      (= operator ">") (native-bool-to-bool-obj (> left-value right-value))
+      (= operator "==") (native-bool-to-bool-obj (== left-value right-value))
+      (= operator "!=") (native-bool-to-bool-obj (not= left-value right-value))
       :else NULL)))
 
 (defn eval-infix-expression
