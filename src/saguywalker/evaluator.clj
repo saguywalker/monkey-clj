@@ -74,9 +74,16 @@
     (cond
       ;; statements
       (contains? node :statements) (reduce (fn [_ stmt]
-                                             (eval-node stmt))
+                                             (let [result (eval-node stmt)
+                                                   result-type (:type result)]
+                                               (if (= result-type
+                                                      object/RETURN-VALUE-OBJ)
+                                                 (reduced result)
+                                                 result)))
                                            nil
                                            (:statements node))
+      (= node-type token/RETURN) (object/return-obj
+                                  (eval-node (:return-value node)))
       (ast/infix? node) (eval-infix-expression (:operator node)
                                                (eval-node (:left node))
                                                (eval-node (:right node)))

@@ -116,4 +116,13 @@
           (is (test-integer-object actual expected))
           (is (test-null-object actual)))))))
 
+(deftest test-return-statements
+  (testing "test return statements"
+    (doseq [tt [{:input "return 10;" :expected 10}
+                {:input "return 10; 9;" :expected 10}
+                {:input "return 2 * 5; 9;" :expected 10}
+                {:input "9; return 2 * 5; 9;" :expected 10}]]
+      (let [actual (test-eval (:input tt))
+            expected (:expected tt)]
+        (is (test-integer-object (:value actual) expected))))))
 
