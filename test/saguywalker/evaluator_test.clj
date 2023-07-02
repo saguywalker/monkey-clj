@@ -21,6 +21,9 @@
   (and (= (:value obj) expected)
        (= (:type obj) object/BOOLEAN-OBJ)))
 
+(defn test-null-object [obj]
+  (= obj evaluator/NULL))
+
 (deftest test-eval-integer-expression
   (testing "test eval integer expression"
     (doseq [tt [{:input "5"
@@ -77,8 +80,7 @@
                 {:input "(1 < 2) == true" :expected true}
                 {:input "(1 < 2) == false" :expected false}
                 {:input "(1 > 2) == true" :expected false}
-                {:input "(1 > 2) == false" :expected true}
-                ]]
+                {:input "(1 > 2) == false" :expected true}]]
       (let [actual (test-eval (:input tt))]
         (is (test-boolean-object actual (:expected tt)))))))
 
@@ -98,4 +100,20 @@
                  :expected true}]]
       (let [actual (test-eval (:input tt))]
         (is (test-boolean-object actual (:expected tt)))))))
+
+(deftest test-if-else-expression
+  (testing "test if else expression"
+    (doseq [tt [{:input "if (true) { 10 }" :expected 10}
+                {:input "if (false) { 10 }" :expected nil}
+                {:input "if (1) { 10 }" :expected 10}
+                {:input "if (1 < 2) { 10 }" :expected 10}
+                {:input "if (1 > 2) { 10 }" :expected nil}
+                {:input "if (1 > 2) { 10 } else { 20 }" :expected 20}
+                {:input "if (1 < 2) { 10 } else { 20 }" :expected 10}]]
+      (let [actual (test-eval (:input tt))
+            expected (:expected tt)]
+        (if expected
+          (is (test-integer-object actual expected))
+          (is (test-null-object actual)))))))
+
 

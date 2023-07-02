@@ -2,7 +2,8 @@
   (:require [clojure.pprint :as pprint]
             [saguywalker.ast :as ast]
             [saguywalker.object :as object]
-            [saguywalker.token :as token]))
+            [saguywalker.token :as token]
+            [saguywalker.evaluator :as evaluator]))
 
 (def TRUE (object/boolean-obj true))
 (def FALSE (object/boolean-obj false))
@@ -61,6 +62,13 @@
     (= operator "!=") (native-bool-to-bool-obj (not= left right))
     :else NULL))
 
+(defn truthy? [c]
+  (cond
+    (= c evaluator/NULL) false
+    (= c evaluator/TRUE) true
+    (= c evaluator/FALSE) false
+    :else true))
+
 (defn eval-node [node]
   (let [node-type (get-in node [:token :type])]
     (cond
@@ -74,6 +82,13 @@
                                                (eval-node (:right node)))
       (ast/prefix? node) (eval-prefix-expression (:operator node)
                                                  (eval-node (:right node)))
+      (ast/if-exp? node) (let [condition (eval-node (:condition node))
+                               consequence (:consequence node)
+                               alt (:alternative node)]
+                           (cond
+                             (truthy? condition) (eval-node consequence)
+                             (not (nil? alt)) (eval-node alt)
+                             :else evaluator/NULL))
       (contains? node :expression) (eval-node (:expression node))
       ;; expressions
       (or (= node-type token/TRUE)
