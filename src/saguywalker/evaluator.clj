@@ -26,14 +26,14 @@
   [right]
   (if (= (:type right) object/INTEGER-OBJ)
     (object/integer-obj (- (:value right)))
-    NULL))
+    (object/error-obj (str "unknown operator: -" (:type right)))))
 
 (defn eval-prefix-expression
   [operator right]
   (cond
     (= operator "!") (eval-bang-operator-expression right)
     (= operator "-") (eval-minus-operator-expression right)
-    :else NULL))
+    :else (object/error-obj (str "unknown operator:" operator (:type right)))))
 
 (defn eval-integer-infix-expression
   [operator left right]
@@ -52,15 +52,23 @@
 
 (defn eval-infix-expression
   [operator left right]
-  (cond
-    (and (= (:type left) object/INTEGER-OBJ)
-         (= (:type right) object/INTEGER-OBJ)) (eval-integer-infix-expression
-                                                operator
-                                                left
-                                                right)
-    (= operator "==") (native-bool-to-bool-obj (= left right))
-    (= operator "!=") (native-bool-to-bool-obj (not= left right))
-    :else NULL))
+  (if (not= (:type left)
+            (:type right))
+    (object/error-obj (str "type mismatch: "
+                           (:type left)
+                           " "
+                           operator
+                           " "
+                           (:type right)))
+    (cond
+      (and (= (:type left) object/INTEGER-OBJ)
+           (= (:type right) object/INTEGER-OBJ)) (eval-integer-infix-expression
+                                                  operator
+                                                  left
+                                                  right)
+      (= operator "==") (native-bool-to-bool-obj (= left right))
+      (= operator "!=") (native-bool-to-bool-obj (not= left right))
+      :else NULL)))
 
 (defn truthy? [c]
   (cond
@@ -69,21 +77,32 @@
     (= c evaluator/FALSE) false
     :else true))
 
+(defn eval-program [eval-func program]
+  (pprint/pprint "Starting eval-program with statements:")
+  (pprint/pprint (:statements program))
+  (pprint/pprint "Processing")
+  (reduce (fn [_ stmt]
+            (let [result (eval-func stmt)
+                  result-type (:type result)]
+              (pprint/pprint result)
+              (pprint/pprint (= result-type
+                                object/RETURN-VALUE-OBJ))
+              (cond
+                (= result-type
+                   object/RETURN-VALUE-OBJ) (reduced (:value result))
+                (= result-type
+                   object/ERROR-OBJ) (reduced result)
+                :else result)))
+          nil
+          (:statements program)))
+
 (defn eval-node [node]
   (let [node-type (get-in node [:token :type])]
     (cond
       ;; statements
-      (contains? node :statements) (reduce (fn [_ stmt]
-                                             (let [result (eval-node stmt)
-                                                   result-type (:type result)]
-                                               (if (= result-type
-                                                      object/RETURN-VALUE-OBJ)
-                                                 (reduced result)
-                                                 result)))
-                                           nil
-                                           (:statements node))
       (= node-type token/RETURN) (object/return-obj
                                   (eval-node (:return-value node)))
+      (contains? node :statements) (eval-program eval-node node)
       (ast/infix? node) (eval-infix-expression (:operator node)
                                                (eval-node (:left node))
                                                (eval-node (:right node)))

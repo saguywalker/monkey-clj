@@ -1,5 +1,6 @@
 (ns saguywalker.evaluator-test
   (:require [clojure.test :refer :all]
+            [clojure.string :as string]
             [clojure.pprint :as pp]
             [saguywalker.evaluator :as evaluator]
             [saguywalker.lexer :as lexer]
@@ -121,8 +122,40 @@
     (doseq [tt [{:input "return 10;" :expected 10}
                 {:input "return 10; 9;" :expected 10}
                 {:input "return 2 * 5; 9;" :expected 10}
-                {:input "9; return 2 * 5; 9;" :expected 10}]]
+                {:input "9; return 2 * 5; 9;" :expected 10}
+                {:input (string/escape
+                         "if (10 > 1) {
+                            if (10 > 1) {
+                              return 10;
+                            }
+                            return 1;
+                          }"
+                         {})
+                 :expected 10}]]
       (let [actual (test-eval (:input tt))
             expected (:expected tt)]
-        (is (test-integer-object (:value actual) expected))))))
+        (is (test-integer-object actual expected))))))
+
+(deftest test-error-handling
+  (testing "test error handling"
+    (doseq [tt [{:input "5 + true;" :expected "type mismatch: INTEGER + BOOLEAN"}
+                {:input "5 + true; 5;" :expected "type mismatch: INTEGER + BOOLEAN"}
+                {:input "-true" :expected "unknown operator: -BOOLEAN"}
+                {:input "true + false;" :expected "unknown operator: BOOLEAN + BOOLEAN"}
+                {:input "5; true + false; 5" :expected "unknown operator: BOOLEAN + BOOLEAN"}
+                {:input "if (10 > 1) { true + false; }" :expected "unknown operator: BOOLEAN + BOOLEAN"}
+                {:input (string/escape
+                         "if (10 > 1) {
+                            if (10 > 1) {
+                              return true + false;
+                            }
+                            return 1;
+                          }"
+                         {})
+                 :expected "unknown operator: BOOLEAN + BOOLEAN"}]]
+      (let [actual (test-eval (:input tt))
+            expected (:expected tt)]
+        (pp/pprint tt)
+        (pp/pprint actual)
+        (is (= (:message actual) expected))))))
 

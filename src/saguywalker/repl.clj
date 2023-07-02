@@ -25,6 +25,9 @@
         evaluated (evaluator/eval-node program)]
     (when (not= (count (:errors program)) 0)
       (pp/pprint (:errors program)))
+    (pp/pprint "REPL result")
+    (pp/pprint program)
+    (pp/pprint evaluated)
     (pp/pprint (object/inspect evaluated))
     (recur)))
 

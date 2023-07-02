@@ -1,5 +1,6 @@
 (ns saguywalker.object)
 
+(def ERROR-OBJ "ERROR")
 (def INTEGER-OBJ "INTEGER")
 (def BOOLEAN-OBJ "BOOLEAN")
 (def NULL-OBJ "NULL")
@@ -16,12 +17,17 @@
    :value b})
 
 (defn return-obj [v]
-  {:type RETURN-VALUE-OBJ 
+  {:type RETURN-VALUE-OBJ
    :value v})
+
+(defn error-obj [e]
+  {:type ERROR-OBJ
+   :message e})
 
 (defn inspect [obj]
   (let [obj-type (:type obj)]
     (cond
       (= obj-type NULL-OBJ) "null"
+      (= obj-type ERROR-OBJ) (str "ERROR: " (:message obj))
       :else (str (:value obj)))))
 
